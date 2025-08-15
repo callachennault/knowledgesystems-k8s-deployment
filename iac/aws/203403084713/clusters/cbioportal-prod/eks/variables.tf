@@ -30,13 +30,13 @@ variable "CLUSTER_NAME" {
 variable "CLUSTER_VER" {
   description = "Kubernetes version of the cluster"
   type        = string
-  default     = "1.30"
+  default     = "1.32"
 }
 
 variable "NODEGROUP_VER" {
   description = "Kubernetes version of the nodegroups"
-  type = string
-  default = "1.30"
+  type        = string
+  default     = "1.32"
 }
 
 variable "CLUSTER_ENV" {
@@ -119,9 +119,35 @@ variable "ROOT_VOL_CONFIG" {
   }
 }
 
+variable "DATA_VOL_CONFIG" {
+  description = "This is the custom root disk config for nodegroups that need a larger disk size"
+  type = object({
+    device_name = string
+    ebs = object({
+      volume_size           = number
+      volume_type           = string
+      iops                  = number
+      throughput            = number
+      encrypted             = bool
+      delete_on_termination = bool
+    })
+  })
+  default = {
+    device_name = "/dev/xvdb"
+    ebs = {
+      volume_size           = 50
+      volume_type           = "gp3"
+      iops                  = 3000
+      throughput            = 125
+      encrypted             = true
+      delete_on_termination = true
+    }
+  }
+}
+
 variable "ADDON_CONFIG" {
   description = "Override default HYC addon config"
-  type = any
+  type        = any
   default = {
     observability = {
       create = false

@@ -74,7 +74,7 @@ spec:
           resources:
             requests:
               cpu: 500m
-              memory: 2Gi
+              memory: 1Gi
             limits:
               cpu: 2
               memory: 4Gi
@@ -86,7 +86,12 @@ spec:
       securityContext: {}
       terminationGracePeriodSeconds: 30
       nodeSelector:
-        workload: lg-general
+        workload: legacy-apps
+      tolerations:
+      - key: "workload"
+        operator: "Equal"
+        value: "legacy-apps"
+        effect: "NoSchedule"
 status: {}
 ---
 apiVersion: v1

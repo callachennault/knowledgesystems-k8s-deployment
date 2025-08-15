@@ -29,19 +29,15 @@ The `iac` directory contains multiple submodules where each submodule resides un
    ```shell
    terraform init
    ```
-5. Pull remote module sources. This requires Git authentication when running for the first time.
-   ```shell
-   terraform get
-   ```
-6. Validate your terraform files.
+5. Validate your terraform files.
    ```shell
    terraform validate
    ```
-7. Dry run to see what changes you are making.
+6. Dry run to see what changes you are making.
    ```shell
    terraform plan
    ```
-8. Apply changes.
+7. Apply changes.
    ```shell
    terraform apply
    ```
@@ -67,7 +63,7 @@ If you want to migrate from your current setup to Terraform-based resource manag
 
 ## Infrastructure State
 
-!!!warning Warning
+!!!danger Warning
 Making changes to state configuration, such as changing the bucket, key, or region, is a destructive action and can lead to out-of-sync terraform states. Always consult before making such changes as it would require state migration.
 !!!
 

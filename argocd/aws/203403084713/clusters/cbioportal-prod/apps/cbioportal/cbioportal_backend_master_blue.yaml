@@ -6,7 +6,7 @@ metadata:
     run: cbioportal-backend-master-blue
   name: cbioportal-backend-master-blue
 spec:
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       run: cbioportal-backend-master-blue
@@ -28,7 +28,7 @@ spec:
       - envFrom:
         - secretRef:
             name: cbioportal-public-blue
-        image: cbioportal/cbioportal@sha256:a537cd6b7c9ac5e3336ca70ee2d2ef4422cbdd153bd27ab76b5640692e52f59d
+        image: cbioportal/cbioportal@sha256:f6d59226eeeae343fb84fb55cdf8419635391b8a0ee5f156547c7c22e43cd1e4
         volumeMounts:
         - name: cbioportal-frontend-config-volume
           mountPath: /cbioportal/

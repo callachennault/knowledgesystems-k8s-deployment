@@ -67,6 +67,7 @@ locals {
       min_size       = 4
       block_device_mappings = {
         root_vol = var.ROOT_VOL_CONFIG
+        data_vol = var.DATA_VOL_CONFIG
       }
       taints = {
         dedicated = {
@@ -141,8 +142,8 @@ locals {
       desired_size   = 1
       min_size       = 1
       max_size       = 2
-      # Pin to specific subnets. This prevents nodegroup to be created in a availability zone different from the underlying mongodb volume
-      subnet_ids = ["subnet-0d2671d84a3f5eb99", "subnet-06f2712e78e593152", "subnet-001ff98812a2e49e5", "subnet-066aca23688737c91"]
+      # Pin to a single subnet. This prevents nodegroup to be created in a availability zone different from the underlying mongodb volume during rolling upgrades
+      subnet_ids = ["subnet-066aca23688737c91"]
       taints = {
         dedicated = {
           key    = var.TAINT_KEY
@@ -162,22 +163,13 @@ locals {
     gn-database = {
       instance_types = ["r7i.2xlarge"]
       ami_type       = "BOTTLEROCKET_x86_64"
-      desired_size   = 2
-      min_size       = 2
-      max_size       = 2
+      desired_size   = 4
+      min_size       = 4
+      max_size       = 4
+      subnet_ids     = ["subnet-01e2143c0b3d4f8a6"]
       block_device_mappings = {
         root_vol = var.ROOT_VOL_CONFIG
-        data_vol = {
-          device_name = "/dev/xvdb"
-          ebs = {
-            volume_size           = 50
-            volume_type           = "gp3"
-            iops                  = 3000
-            throughput            = 125
-            encrypted             = true
-            delete_on_termination = true
-          }
-        }
+        data_vol = var.DATA_VOL_CONFIG
       }
       taints = {
         dedicated = {
@@ -203,17 +195,7 @@ locals {
       max_size       = 1
       block_device_mappings = {
         root_vol = var.ROOT_VOL_CONFIG
-        data_vol = {
-          device_name = "/dev/xvdb"
-          ebs = {
-            volume_size           = 50
-            volume_type           = "gp3"
-            iops                  = 3000
-            throughput            = 125
-            encrypted             = true
-            delete_on_termination = true
-          }
-        }
+        data_vol = var.DATA_VOL_CONFIG
       }
       taints = {
         dedicated = {
@@ -239,17 +221,7 @@ locals {
       max_size       = 2
       block_device_mappings = {
         root_vol = var.ROOT_VOL_CONFIG
-        data_vol = {
-          device_name = "/dev/xvdb"
-          ebs = {
-            volume_size           = 50
-            volume_type           = "gp3"
-            iops                  = 3000
-            throughput            = 125
-            encrypted             = true
-            delete_on_termination = true
-          }
-        }
+        data_vol = var.DATA_VOL_CONFIG
       }
       taints = {
         dedicated = {
@@ -312,6 +284,10 @@ locals {
       desired_size   = 2
       min_size       = 2
       max_size       = 2
+      block_device_mappings = {
+        root_vol = var.ROOT_VOL_CONFIG
+        data_vol = var.DATA_VOL_CONFIG
+      }
       taints = {
         dedicated = {
           key    = var.TAINT_KEY
@@ -356,8 +332,8 @@ locals {
       desired_size   = 1
       min_size       = 1
       max_size       = 1
-      # Pin to specific subnets. This prevents nodegroup to be created in a availability zone different from the underlying persistent volumes
-      subnet_ids = ["subnet-0d2671d84a3f5eb99", "subnet-06f2712e78e593152", "subnet-001ff98812a2e49e5", "subnet-066aca23688737c91"]
+      # Pin to a single subnet. This prevents nodegroup to be created in a availability zone different from the underlying persistent volumes
+      subnet_ids = ["subnet-0b42183b1df0e9061"]
       taints = {
         dedicated = {
           key    = var.TAINT_KEY
@@ -377,9 +353,9 @@ locals {
     oncokb-af = {
       instance_types = ["t4g.large"]
       ami_type       = "BOTTLEROCKET_ARM_64"
-      desired_size   = 1
-      min_size       = 1
-      max_size       = 1
+      desired_size   = 2
+      min_size       = 2
+      max_size       = 2
       block_device_mappings = {
         root_vol = var.ROOT_VOL_CONFIG
       }
@@ -470,4 +446,30 @@ module "eks_cluster" {
       )
     })
   }
+}
+
+module "iam" {
+  source                    = "../iam"
+  cluster_oidc_provider_arn = module.eks_cluster.cluster_oidc_provider
+}
+
+resource "aws_eks_addon" "s3_mountpoint_addon" {
+  addon_name                  = "aws-mountpoint-s3-csi-driver"
+  addon_version               = "v1.15.0-eksbuild.1"
+  cluster_name                = basename(module.eks_cluster.cluster_arn)
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+  service_account_role_arn    = module.iam.cellxgene_s3_mountpoint_role_arn
+  configuration_values = jsonencode({
+    node = {
+      tolerations = [
+        {
+          key      = "workload"
+          operator = "Equal"
+          value    = "cellxgene"
+          effect   = "NoSchedule"
+        }
+      ]
+    }
+  })
 }
